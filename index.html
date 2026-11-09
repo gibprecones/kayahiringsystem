@@ -77,16 +77,18 @@ English Specialist Inc.`;
       const subject='Confirmation of Middle Name';
       const body=`Hi ${name},
 
+Thank you for expressing your interest in the Remote English Instructor position.
+
 May we please confirm your middle name? We need to enter it into our system, and we currently only have your name listed as ${name}.
 
-Is your middle name J? Kindly confirm your complete middle name so we can ensure your details are entered correctly.
+Kindly confirm your complete middle name so we can ensure your details are entered correctly.
 
-Thank you!`;
-      const bodyWithSignature=`${body}
+Thank you!
 
 Best regards,
 Recruitment Team
 English Specialist Inc.`;
+      const bodyWithSignature=body;
       window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyWithSignature),'_blank','noopener'); return true;
     }
     function toast(msg){let t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}
