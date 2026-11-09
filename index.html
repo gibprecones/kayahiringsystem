@@ -30,12 +30,15 @@
   </main><div id="toast" class="toast"></div><div id="modal" class="modal"><div class="modal-card"><div class="modal-head"><b id="modalTitle">Resume preview</b><div><button id="copyText" class="secondary">Copy text</button><button id="closeModal" class="danger">Close</button></div></div><div class="modal-body"><iframe id="preview" class="preview" title="Resume preview"></iframe><textarea id="textPreview" class="text-preview" readonly placeholder="Extracted resume text"></textarea></div></div></div>
   <script>
     const KEY='kaya-hiring-tracker-v1'; let people=JSON.parse(localStorage.getItem(KEY)||'[]'); let previewText='';
+    const API='/api/candidates';
     const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const properName=s=>String(s??'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|[\s'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
     const cleanPhone=s=>{let d=String(s??'').replace(/\D/g,'');if(d.startsWith('63')&&d.length>=12)d='0'+d.slice(2);else if(d.startsWith('9')&&d.length===10)d='0'+d;return d;};
     const collapseLetters=s=>{let a=String(s??'').trim().split(/\s+/),out=[];for(let i=0;i<a.length;){if(/^[A-Za-z]$/.test(a[i])&&!a[i].includes('.')){let word='';while(i<a.length&&/^[A-Za-z]$/.test(a[i]))word+=a[i++];out.push(word)}else out.push(a[i++])}return out.join(' ')};
     const applicantName=p=>[p.first,p.middle,p.last].filter(Boolean).map(properName).join(' ')||'Applicant';
-    function save(){localStorage.setItem(KEY,JSON.stringify(people));render();}
+    let saveTimer;
+    function save(){localStorage.setItem(KEY,JSON.stringify(people));render();clearTimeout(saveTimer);saveTimer=setTimeout(()=>fetch(API,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(people)}).catch(()=>{}),250);}
+    async function loadCloudData(){try{let r=await fetch(API);if(r.ok){let cloud=await r.json();if(Array.isArray(cloud)){people=cloud;localStorage.setItem(KEY,JSON.stringify(people));render();}}}catch(e){}}
     function openInterestEmail(p,stage='sent'){
       if(!p.email){alert('Walang email address ang applicant na ito. Ilagay muna ang email bago i-check.');return false}
       const name=(properName(p.first).split(/\s+/)[0]||'Applicant');
@@ -79,7 +82,12 @@ May we please confirm your middle name? We need to enter it into our system, and
 Is your middle name J? Kindly confirm your complete middle name so we can ensure your details are entered correctly.
 
 Thank you!`;
-      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank','noopener'); return true;
+      const bodyWithSignature=`${body}
+
+Best regards,
+Recruitment Team
+English Specialist Inc.`;
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyWithSignature),'_blank','noopener'); return true;
     }
     function toast(msg){let t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}
     function render(){ $('#total').textContent=people.length;$('#qualified').textContent=people.filter(p=>p.degree==='Yes').length;$('#contacted').textContent=people.filter(p=>p.sent).length;$('#referred').textContent=people.filter(p=>p.referral).length; const body=$('#rows');
@@ -97,7 +105,7 @@ Thank you!`;
       if(nameLine.includes(',')){let a=nameLine.split(',').map(x=>x.trim()).filter(Boolean);let given=(a[1]||'').split(/\s+/);first=given[0]||'';middle=given.length>1?given.slice(1).join(' '):'';last=(a[0]||'').split(/\s+/).join(' ')}else{let parts=nameLine.split(/\s+/).filter(Boolean), initials=parts.map((x,n)=>({x,n})).filter(o=>/^[A-Za-z](?:\.)?$/.test(o.x));if(initials.length&&initials[0].n>0&&initials[0].n<parts.length-1){let m=initials[0].n;first=parts.slice(0,m).join(' ');middle=parts[m];last=parts[m+1]||''}else if(parts.length>=3){first=parts.slice(0,-1).join(' ');last=parts[parts.length-1]||'';middle=''}else{first=parts[0]||'';last=parts.length>1?parts[parts.length-1]:'';middle=''}}
       return {file:file.name,uploaded:new Date().toLocaleDateString(),first:properName(first),middle:properName(middle),last:properName(last),phone:cleanPhone(phone),email,degree,sent:false,response:false,referral:false,notes:''};}
     async function readFile(f){if(f.type==='text/plain'||/\.(txt|md|rtf)$/i.test(f.name))return await f.text();if(/\.docx$/i.test(f.name)&&window.mammoth){return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;}if(/\.pdf$/i.test(f.name)){try{let pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise, out='';for(let n=1;n<=pdf.numPages;n++){let page=await pdf.getPage(n),c=await page.getTextContent(),items=c.items.map(x=>({s:x.str.trim(),x:x.transform[4],y:Math.round(x.transform[5]/2)*2,w:x.width})).filter(x=>x.s).sort((a,b)=>a.y-b.y||a.x-b.x),lines=[];for(const it of items){let line=lines.find(l=>Math.abs(l.y-it.y)<=2);if(!line){line={y:it.y,parts:[]};lines.push(line)}let prev=line.parts[line.parts.length-1];let gap=prev?it.x-(prev.x+prev.w):99;line.parts.push({s:it.s,x:it.x,w:it.w,join:gap<14})}out+=lines.sort((a,b)=>b.y-a.y).map(l=>l.parts.map((p,j)=>j&& !p.join?' '+p.s:p.s).join('')).join('\n')+'\n';}return out}catch(e){return ''}}return ''}
-    async function addFiles(list){for(const f of list){let text=await readFile(f),p=extract(text,f);p.rawText=text;p.previewUrl=URL.createObjectURL(f);people.push(p);}save();toast(`${list.length} resume${list.length>1?'s':''} added`)}
+    async function addFiles(list){for(const f of list){let text=await readFile(f),p=extract(text,f);p.rawText=text;p.previewUrl=URL.createObjectURL(f);try{let r=await fetch('/api/resumes',{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream','X-Filename':encodeURIComponent(f.name)},body:f});if(r.ok){let d=await r.json();p.storageKey=d.key;p.previewUrl=d.url||p.previewUrl;}}catch(e){}people.push(p);}save();toast(`${list.length} resume${list.length>1?'s':''} added`)}
     $('#files').onchange=e=>addFiles([...e.target.files]);$('#add').onclick=()=>{people.push({file:'Manual entry',uploaded:new Date().toLocaleDateString(),first:'',middle:'',last:'',phone:'',email:'',degree:'Unknown',sent:false,response:false,referral:false,notes:''});save()};
     $('#rows').addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(i!==undefined){let next=e.target.type==='checkbox'?e.target.checked:e.target.value;if(e.target.type==='checkbox'&&(k==='sent'||k==='response')&&next){if(!openInterestEmail(people[i],k==='response'?'response':'sent')){e.target.checked=false;return}toast('Gmail compose opened for '+people[i].email)}people[i][k]=next;localStorage.setItem(KEY,JSON.stringify(people));if(e.target.type==='checkbox')render()}});
     $('#rows').addEventListener('change',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(i!==undefined&&['first','middle','last','phone'].includes(k)){people[i][k]=k==='phone'?cleanPhone(e.target.value):properName(e.target.value);localStorage.setItem(KEY,JSON.stringify(people));render()}});
@@ -106,6 +114,6 @@ Thank you!`;
     $('#rows').addEventListener('click',e=>{if(e.target.classList.contains('resume-link')){let p=people[+e.target.dataset.i];$('#modalTitle').textContent=p.file||'Resume preview';$('#preview').src=p.previewUrl||'about:blank';previewText=p.rawText||'No extracted text available. If this is a scanned/image-only PDF, text extraction is not available yet.';$('#textPreview').value=previewText;$('#modal').classList.add('open')}});
     $('#closeModal').onclick=()=>$('#modal').classList.remove('open');$('#copyText').onclick=async()=>{await navigator.clipboard.writeText(previewText);toast('Resume text copied')};
     $('#clear').onclick=()=>{if(confirm('Delete all candidates?')){people=[];save();toast('All candidates cleared')}};$('#drop').ondragover=e=>{e.preventDefault();$('#drop').classList.add('drag')};$('#drop').ondragleave=()=>$('#drop').classList.remove('drag');$('#drop').ondrop=e=>{e.preventDefault();$('#drop').classList.remove('drag');addFiles([...e.dataTransfer.files])};
-    $('#export').onclick=()=>{let cols=['file','first','middle','last','phone','email','degree','sent','response','referral','notes'];let csv=[cols.join(','),...people.map(p=>cols.map(k=>`"${String(p[k]??'').replaceAll('"','""')}"`).join(','))].join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='kaya-hiring-tracker.csv';a.click()};render();
+    $('#export').onclick=()=>{let cols=['file','first','middle','last','phone','email','degree','sent','response','referral','notes'];let csv=[cols.join(','),...people.map(p=>cols.map(k=>`"${String(p[k]??'').replaceAll('"','""')}"`).join(','))].join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='kaya-hiring-tracker.csv';a.click()};render();loadCloudData();
   </script>
 </body></html>
