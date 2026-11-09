@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KAYA Hiring Tracker</title>
+  <script type="module">import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs'; window.pdfjsLib=pdfjsLib; pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';</script>
+  <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <style>
+    :root{--navy:#14342b;--mint:#dff4e8;--line:#d9e4df;--bg:#f6faf7;--gold:#eab866;--text:#1e2c27}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+    header{background:var(--navy);color:white;padding:20px 28px;display:flex;justify-content:space-between;align-items:center} h1{margin:0;font-size:23px} header p{margin:4px 0 0;color:#c6ddd1}
+    main{padding:22px 28px;max-width:1600px;margin:auto}.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+    button,.file-label{border:0;border-radius:8px;padding:10px 14px;font-weight:650;cursor:pointer;background:var(--navy);color:#fff}.file-label{background:#277c5d;display:inline-block} button.secondary{background:white;color:var(--navy);border:1px solid #b9ccc3} button.danger{background:#fff0ee;color:#a74438;border:1px solid #f3c6bf}
+    .stats{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}.stat{background:white;border:1px solid var(--line);border-radius:10px;padding:12px 18px;min-width:150px}.stat b{display:block;font-size:22px;color:var(--navy)}.stat span{color:#6a7c74;font-size:12px}
+    .sheet-wrap{background:white;border:1px solid var(--line);border-radius:12px;overflow:auto;box-shadow:0 3px 14px #19372b0d}.drop{padding:12px;text-align:center;border-bottom:1px dashed #b8ccc1;color:#668077;background:#fbfefc}.drop.drag{background:var(--mint)}
+    table{border-collapse:collapse;min-width:1420px;width:100%} th{background:#edf6f0;color:#496258;text-align:left;font-size:12px;white-space:nowrap;position:sticky;top:0;z-index:1} th,td{border-bottom:1px solid var(--line);padding:10px 8px;vertical-align:middle} td input[type=text],td input[type=email],td input[type=tel]{width:100%;border:1px solid transparent;background:transparent;border-radius:5px;padding:7px;font:inherit} td input:focus{border-color:#9ac8b1;background:#fff;outline:2px solid #d9f0e2}.resume{max-width:210px}.degree{font-weight:700}.yes{color:#18734d}.no{color:#a74438}.unknown{color:#a1741b}.check{text-align:center}.check input{width:18px;height:18px;accent-color:#277c5d}.empty{text-align:center;padding:45px;color:#779087}.small{font-size:12px;color:#6a7c74}.toast{position:fixed;right:22px;bottom:22px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:8px;display:none}.hint{margin:0 0 14px;color:#5c7368}.resume-link{color:#176b4d;cursor:pointer;text-decoration:underline}.modal{display:none;position:fixed;inset:0;background:#10261db8;z-index:5;padding:4vh 5vw}.modal.open{display:block}.modal-card{background:white;border-radius:12px;height:92vh;display:flex;flex-direction:column;overflow:hidden}.modal-head{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}.modal-body{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;padding:12px;min-height:0;flex:1}.preview{width:100%;height:100%;border:1px solid var(--line);border-radius:8px}.text-preview{width:100%;height:100%;resize:none;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px ui-monospace,monospace}
+  </style>
+</head>
+<body>
+  <header><div><h1>KAYA Hiring Tracker</h1><p>Resume screening and hiring stage checklist</p></div><div class="small" style="color:#c6ddd1">Saved automatically in this browser</div></header>
+  <main>
+    <p class="hint">Mag-upload ng resume para automatic na ma-extract ang contact details at ma-check kung may college degree. I-edit ang cells kung kailangan.</p>
+    <div class="toolbar"><label class="file-label">＋ Upload resumes <input id="files" type="file" multiple accept=".pdf,.docx,.txt,.md,.rtf" hidden></label><button id="add" class="secondary">＋ Add candidate</button><button id="export" class="secondary">⇩ Export CSV</button><button id="clear" class="danger">Clear all</button></div>
+    <div class="stats"><div class="stat"><b id="total">0</b><span>Total candidates</span></div><div class="stat"><b id="qualified">0</b><span>College degree found</span></div><div class="stat"><b id="contacted">0</b><span>Sent email</span></div><div class="stat"><b id="referred">0</b><span>Referral forms</span></div></div>
+    <section class="sheet-wrap"><div id="drop" class="drop">Drag and drop resume files here, or use “Upload resumes”</div><table><thead><tr><th>Resume</th><th>First name</th><th>Middle name</th><th>Last name</th><th>CP number</th><th>Email</th><th>Name verifier</th><th>Status</th><th>College degree?</th><th>Sent email<br>if interested</th><th>Interested email<br>response</th><th>Referral form<br>filled out</th><th>51Talk teacher<br>already</th><th>Notes</th><th></th></tr></thead><tbody id="rows"></tbody></table></section>
+    <h3 style="margin:24px 0 10px;color:var(--navy)">51Talk Already</h3><section class="sheet-wrap"><table><thead><tr><th>Resume</th><th>First name</th><th>Middle name</th><th>Last name</th><th>CP number</th><th>Email</th><th>Status</th><th>Notes</th></tr></thead><tbody id="rows51"></tbody></table></section>
+  </main><div id="toast" class="toast"></div><div id="modal" class="modal"><div class="modal-card"><div class="modal-head"><b id="modalTitle">Resume preview</b><div><button id="copyText" class="secondary">Copy text</button><button id="closeModal" class="danger">Close</button></div></div><div class="modal-body"><iframe id="preview" class="preview" title="Resume preview"></iframe><textarea id="textPreview" class="text-preview" readonly placeholder="Extracted resume text"></textarea></div></div></div>
+  <script>
+    const KEY='kaya-hiring-tracker-v1'; let people=JSON.parse(localStorage.getItem(KEY)||'[]'); let previewText='';
+    const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const properName=s=>String(s??'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|[\s'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+    const cleanPhone=s=>String(s??'').replace(/\D/g,'');
+    const applicantName=p=>[p.first,p.middle,p.last].filter(Boolean).map(properName).join(' ')||'Applicant';
+    function save(){localStorage.setItem(KEY,JSON.stringify(people));render();}
+    function openInterestEmail(p,stage='sent'){
+      if(!p.email){alert('Walang email address ang applicant na ito. Ilagay muna ang email bago i-check.');return false}
+      const name=(properName(p.first).split(/\s+/)[0]||'Applicant');
+      const subject=stage==='response'?'Next Steps – Remote English Instructor Application':'Thank You for Applying – Remote English Instructor';
+      const body=stage==='response'?`Hi ${name},
+
+Thank you for confirming your continued interest in the Remote English Instructor position at English Specialist Inc.!
+
+We will be sending you a separate email containing the application form link. Kindly check your inbox and make sure to complete and submit the form so we can proceed with the next steps of your application process.
+
+Please ensure that all required information is accurately provided before submitting.
+
+We look forward to moving forward with your application!
+
+Best regards,
+Recruitment Team
+English Specialist Inc.`:`Hi ${name},
+
+Thank you for expressing your interest in the Remote English Instructor position.
+
+We have received your application and would like to confirm if you are still interested in pursuing this opportunity.
+
+If you are still interested, kindly reply to this email. We will then send you a separate email with the next steps to complete your application journey.
+
+We look forward to hearing from you!
+
+Best regards,
+Recruitment Team
+English Specialist Inc.`;
+      const url='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+      window.open(url,'_blank','noopener'); return true;
+    }
+    function openMiddleEmail(p){
+      if(!p.email){alert('Walang email address ang applicant na ito. Ilagay muna ang email bago i-click.');return false}
+      const name=applicantName(p);
+      const subject='Confirmation of Middle Name';
+      const body=`Hi ${name},
+
+May we please confirm your middle name? We need to enter it into our system, and we currently only have your name listed as ${name}.
+
+Is your middle name J? Kindly confirm your complete middle name so we can ensure your details are entered correctly.
+
+Thank you!`;
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body),'_blank','noopener'); return true;
+    }
+    function toast(msg){let t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2300)}
+    function render(){ $('#total').textContent=people.length;$('#qualified').textContent=people.filter(p=>p.degree==='Yes').length;$('#contacted').textContent=people.filter(p=>p.sent).length;$('#referred').textContent=people.filter(p=>p.referral).length; const body=$('#rows');
+      body.innerHTML=people.length?people.map((p,i)=>{let status=p.middleConfirm?'Middle name confirmation sent':p.referral?'Referral form complete':p.response?'Interested response sent':p.sent?'Sent':'Pending', verifier=p.middle?'Name detected':'Need middle name';return `<tr data-person="${i}"><td class="resume"><b class="resume-link" data-i="${i}">${esc(p.file||'Manual entry')}</b><br><span class="small">${esc(p.uploaded||'')}</span></td>${['first','middle','last','phone','email'].map(k=>`<td><input data-i="${i}" data-k="${k}" type="${k==='email'?'email':k==='phone'?'tel':'text'}" value="${esc(['first','middle','last'].includes(k)?properName(p[k]):k==='phone'?cleanPhone(p[k]):p[k])}"></td>`).join('')}<td><button class="${p.middle?'secondary':'unknown'} verifier" data-i="${i}" style="padding:6px 8px;color:${p.middle?'#18734d':'#a1741b'};background:transparent">${verifier}</button></td><td><b class="${status==='Pending'?'unknown':'yes'}">${status}</b></td><td class="degree ${p.degree==='Yes'?'yes':p.degree==='No'?'no':'unknown'}">${p.degree}</td>${['sent','response','referral','fiftyone'].map(k=>`<td class="check"><input data-i="${i}" data-k="${k}" type="checkbox" ${p[k]?'checked':''}></td>`).join('')}<td><input data-i="${i}" data-k="notes" type="text" value="${esc(p.notes)}"></td><td><button class="danger del" data-i="${i}" title="Delete">×</button></td></tr>`}).join(''):`<tr><td colspan="15" class="empty">Wala pang candidates. Mag-upload ng resumes para magsimula.</td></tr>`;
+      const r51=$('#rows51');r51.innerHTML=people.filter(p=>p.fiftyone).map((p,i)=>{let n=people.indexOf(p),status=p.referral?'Referral form complete':p.response?'Interested response sent':p.sent?'Sent':'Pending';return `<tr><td>${esc(p.file||'Manual entry')}</td><td>${esc(properName(p.first))}</td><td>${esc(properName(p.middle))}</td><td>${esc(properName(p.last))}</td><td>${esc(cleanPhone(p.phone))}</td><td>${esc(p.email)}</td><td>${status}</td><td>${esc(p.notes)}</td></tr>`}).join('')||'<tr><td colspan="8" class="empty">Wala pang marked 51Talk applicants.</td></tr>';
+      body.querySelectorAll('tr[data-person]').forEach(tr=>{if(people[+tr.dataset.person]?.fiftyone)tr.remove()});
+    }
+    function extract(text,file){let clean=text.replace(/\s+/g,' ').trim();let email=(clean.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)||[''])[0];let phone=(clean.match(/(?:\+63\s?\d{3}[\s-]?\d{3}[\s-]?\d{4}|09\d{2}[\s-]?\d{3}[\s-]?\d{4}|9\d{2}[\s-]?\d{3}[\s-]?\d{4})/i)||[''])[0];let degree=/\b(bachelor|bachelors|baccalaureate|college degree|university|degree|bs\s|ba\s|bsc\s|b\.s\.|b\.a\.)/i.test(clean)?'Yes':'No';
+      let lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean), nameLine='';
+      let labeled=(clean.match(/(?:name\s*[:\-]?\s*)([A-Za-z][A-Za-z .,'-]{2,70})/i)||[])[1];
+      if(labeled) nameLine=labeled; else {let top=[];for(const line of lines.slice(0,12)){let x=line.replace(/[|•]/g,' ').trim();if(/^[A-Za-z][A-Za-z .,'-]{1,60}$/.test(x)&&!/@|resume|curriculum vitae|phone|mobile|email|address|linkedin/i.test(x)){top.push(x);if(top.join(' ').split(/\s+/).length>=4)break}else if(top.length)break}nameLine=top.join(' ')}
+      if(!nameLine){let stop=/^(email|e-mail|phone|mobile|contact|address|linkedin|objective|profile|experience|education|skills|summary|curriculum|resume)$/i;let tokens=clean.split(/\s+/).map(x=>x.replace(/^[^A-Za-z]+|[^A-Za-z.,'-]+$/g,'')).filter(Boolean), picked=[];for(const token of tokens.slice(0,20)){if(stop.test(token)||/@/.test(token)||/^\+?\d/.test(token))break;if(!/^[A-Za-z][A-Za-z.'-]*$/.test(token))break;picked.push(token);if(picked.length>=4)break}if(picked.length>=2)nameLine=picked.join(' ')}
+      nameLine=nameLine.replace(/^(resume|curriculum vitae)\s*/i,'').trim();let first='',middle='',last='';
+      if(nameLine.includes(',')){let a=nameLine.split(',').map(x=>x.trim()).filter(Boolean);let given=(a[1]||'').split(/\s+/);first=given[0]||'';middle=given.length>1?given.slice(1).join(' '):'';last=(a[0]||'').split(/\s+/).join(' ')}else{let parts=nameLine.split(/\s+/).filter(Boolean), initials=parts.map((x,n)=>({x,n})).filter(o=>/^[A-Za-z](?:\.)?$/.test(o.x));if(initials.length&&initials[0].n>0&&initials[0].n<parts.length-1){let m=initials[0].n;first=parts.slice(0,m).join(' ');middle=parts[m];last=parts[m+1]||''}else if(parts.length>=3){first=parts.slice(0,-1).join(' ');last=parts[parts.length-1]||'';middle=''}else{first=parts[0]||'';last=parts.length>1?parts[parts.length-1]:'';middle=''}}
+      return {file:file.name,uploaded:new Date().toLocaleDateString(),first:properName(first),middle:properName(middle),last:properName(last),phone:cleanPhone(phone),email,degree,sent:false,response:false,referral:false,notes:''};}
+    async function readFile(f){if(f.type==='text/plain'||/\.(txt|md|rtf)$/i.test(f.name))return await f.text();if(/\.docx$/i.test(f.name)&&window.mammoth){return (await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;}if(/\.pdf$/i.test(f.name)){try{let pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise, out='';for(let n=1;n<=pdf.numPages;n++){let page=await pdf.getPage(n),c=await page.getTextContent(),items=c.items.map(x=>({s:x.str.trim(),x:x.transform[4],y:Math.round(x.transform[5]/2)*2,w:x.width})).filter(x=>x.s).sort((a,b)=>a.y-b.y||a.x-b.x),lines=[];for(const it of items){let line=lines.find(l=>Math.abs(l.y-it.y)<=2);if(!line){line={y:it.y,parts:[]};lines.push(line)}let prev=line.parts[line.parts.length-1];let gap=prev?it.x-(prev.x+prev.w):99;line.parts.push({s:it.s,x:it.x,w:it.w,join:gap<14})}out+=lines.sort((a,b)=>b.y-a.y).map(l=>l.parts.map((p,j)=>j&& !p.join?' '+p.s:p.s).join('')).join('\n')+'\n';}return out}catch(e){return ''}}return ''}
+    async function addFiles(list){for(const f of list){let text=await readFile(f),p=extract(text,f);p.rawText=text;p.previewUrl=URL.createObjectURL(f);people.push(p);}save();toast(`${list.length} resume${list.length>1?'s':''} added`)}
+    $('#files').onchange=e=>addFiles([...e.target.files]);$('#add').onclick=()=>{people.push({file:'Manual entry',uploaded:new Date().toLocaleDateString(),first:'',middle:'',last:'',phone:'',email:'',degree:'Unknown',sent:false,response:false,referral:false,notes:''});save()};
+    $('#rows').addEventListener('input',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(i!==undefined){let next=e.target.type==='checkbox'?e.target.checked:e.target.value;if(e.target.type==='checkbox'&&(k==='sent'||k==='response')&&next){if(!openInterestEmail(people[i],k==='response'?'response':'sent')){e.target.checked=false;return}toast('Gmail compose opened for '+people[i].email)}people[i][k]=next;localStorage.setItem(KEY,JSON.stringify(people));if(e.target.type==='checkbox')render()}});
+    $('#rows').addEventListener('change',e=>{let i=e.target.dataset.i,k=e.target.dataset.k;if(i!==undefined&&['first','middle','last','phone'].includes(k)){people[i][k]=k==='phone'?cleanPhone(e.target.value):properName(e.target.value);localStorage.setItem(KEY,JSON.stringify(people));render()}});
+    $('#rows').addEventListener('click',e=>{if(e.target.classList.contains('del')){people.splice(+e.target.dataset.i,1);save();toast('Candidate removed')}});
+    $('#rows').addEventListener('click',e=>{if(e.target.classList.contains('verifier')&&!people[+e.target.dataset.i].middle){let i=+e.target.dataset.i;if(openMiddleEmail(people[i])){people[i].middleConfirm=true;localStorage.setItem(KEY,JSON.stringify(people));render();toast('Gmail compose opened for '+people[i].email)}}});
+    $('#rows').addEventListener('click',e=>{if(e.target.classList.contains('resume-link')){let p=people[+e.target.dataset.i];$('#modalTitle').textContent=p.file||'Resume preview';$('#preview').src=p.previewUrl||'about:blank';previewText=p.rawText||'No extracted text available. If this is a scanned/image-only PDF, text extraction is not available yet.';$('#textPreview').value=previewText;$('#modal').classList.add('open')}});
+    $('#closeModal').onclick=()=>$('#modal').classList.remove('open');$('#copyText').onclick=async()=>{await navigator.clipboard.writeText(previewText);toast('Resume text copied')};
+    $('#clear').onclick=()=>{if(confirm('Delete all candidates?')){people=[];save();toast('All candidates cleared')}};$('#drop').ondragover=e=>{e.preventDefault();$('#drop').classList.add('drag')};$('#drop').ondragleave=()=>$('#drop').classList.remove('drag');$('#drop').ondrop=e=>{e.preventDefault();$('#drop').classList.remove('drag');addFiles([...e.dataTransfer.files])};
+    $('#export').onclick=()=>{let cols=['file','first','middle','last','phone','email','degree','sent','response','referral','notes'];let csv=[cols.join(','),...people.map(p=>cols.map(k=>`"${String(p[k]??'').replaceAll('"','""')}"`).join(','))].join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='kaya-hiring-tracker.csv';a.click()};render();
+  </script>
+</body></html>
