@@ -48,6 +48,7 @@
     function openInterestEmail(p,stage='sent'){
       if(!p.email){alert('Walang email address ang applicant na ito. Ilagay muna ang email bago i-check.');return false}
       const name=(properName(p.first).split(/\s+/)[0]||'Applicant');
+      const fullName=applicantName(p);
       const subject=stage==='response'?'Next Steps – Remote English Instructor Application':'Thank You for Applying – Remote English Instructor';
       const body=stage==='response'?`Hi ${name},
 
@@ -85,7 +86,7 @@ English Specialist Inc.`;
 
 Thank you for expressing your interest in the Remote English Instructor position.
 
-May we please confirm your middle name? We need to enter it into our system, and we currently only have your name listed as ${name}.
+May we please confirm your middle name? We need to enter it into our system, and we currently only have your name listed as "${fullName}".
 
 Kindly confirm your complete middle name so we can ensure your details are entered correctly.
 
