@@ -81,6 +81,7 @@ English Specialist Inc.`;
     function openMiddleEmail(p){
       if(!p.email){alert('Walang email address ang applicant na ito. Ilagay muna ang email bago i-click.');return false}
       const name=(properName(p.first).split(/\s+/)[0]||'Applicant');
+      const fullName=applicantName(p);
       const subject='Confirmation of Middle Name';
       const body=`Hi ${name},
 
