@@ -36,7 +36,9 @@
   </main><div id="scrollCategory" class="scroll-category">Regular Applicants</div><div id="floatingScroll"><div id="floatingScrollInner"></div></div><div id="toast" class="toast"></div><div id="modal" class="modal"><div class="modal-card"><div class="modal-head"><b id="modalTitle">Resume preview</b><div><button id="copyText" class="secondary">Copy text</button><button id="closeModal" class="danger">Close</button></div></div><div class="modal-body"><iframe id="preview" class="preview" title="Resume preview"></iframe><textarea id="textPreview" class="text-preview" readonly placeholder="Extracted resume text"></textarea></div></div></div>
   <script>
     const KEY='kaya-hiring-tracker-v1'; let people=JSON.parse(localStorage.getItem(KEY)||'[]'); let previewText='';let activeCellKey='';
-    const API='/api/candidates';
+    const API='/api/candidates'; const EMAIL_SIGNATURE=`Best regards,
+Recruitment Team
+English Specialist Inc.`;
     const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const properName=s=>String(s??'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|[\s'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
     const cleanPhone=s=>{let d=String(s??'').replace(/\D/g,'');if(d.startsWith('63')&&d.length>=12)d='0'+d.slice(2);else if(d.startsWith('9')&&d.length===10)d='0'+d;return d&&!d.startsWith('0')?'0'+d:d;};
@@ -63,9 +65,7 @@ Please ensure that all required information is accurate and complete before subm
 
 We look forward to moving forward with your application!
 
-Best regards,
-Recruitment Team
-English Specialist Inc.`:`Hi ${name},
+${EMAIL_SIGNATURE}`:`Hi ${name},
 
 Thank you for expressing your interest in the Remote English Instructor position.
 
@@ -75,9 +75,7 @@ If you are still interested, kindly reply to this email. We will then send you a
 
 We look forward to hearing from you!
 
-Best regards,
-Recruitment Team
-English Specialist Inc.`;
+${EMAIL_SIGNATURE}`;
       const url='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
       window.open(url,'_blank','noopener'); return true;
     }
@@ -96,9 +94,7 @@ Kindly confirm your complete middle name so we can ensure your details are enter
 
 Thank you!
 
-Best regards,
-Recruitment Team
-English Specialist Inc.`;
+${EMAIL_SIGNATURE}`;
       const bodyWithSignature=body;
       const composeUrl='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(p.email)+'&su='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyWithSignature);const opened=window.open(composeUrl,'_blank');if(!opened)window.location.href=composeUrl;return true;
     }
