@@ -39,7 +39,7 @@
     const API='/api/candidates';
     const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const properName=s=>String(s??'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|[\s'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
-    const cleanPhone=s=>{let raw=String(s??'').trim(),international=/^\s*\+/.test(raw),d=raw.replace(/\D/g,'');if(d.startsWith('63')&&d.length>=12)d='0'+d.slice(2);else if(d.startsWith('9')&&d.length===10)d='0'+d;return international&&d&&!d.startsWith('63')?'+'+d:d;};
+    const cleanPhone=s=>{let d=String(s??'').replace(/\D/g,'');if(d.startsWith('63')&&d.length>=12)d='0'+d.slice(2);else if(d.startsWith('9')&&d.length===10)d='0'+d;return d&&!d.startsWith('0')?'0'+d:d;};
     const collapseLetters=s=>{let a=String(s??'').trim().split(/\s+/),out=[];for(let i=0;i<a.length;){if(/^[A-Za-z]$/.test(a[i])&&!a[i].includes('.')){let word='';while(i<a.length&&/^[A-Za-z]$/.test(a[i]))word+=a[i++];out.push(word)}else out.push(a[i++])}return out.join(' ')};
     const applicantName=p=>[p.first,p.middle,p.last].filter(Boolean).map(properName).join(' ')||'Applicant';
     let saveTimer;
