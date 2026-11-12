@@ -39,9 +39,7 @@
     const API='/api/candidates'; const EMAIL_SIGNATURE=`Best regards,
 
 Recruitment Team
-English Specialist Inc.
-────────────────────────
-Remote English Instructor Recruitment`;
+English Specialist Inc.`;
     const $=s=>document.querySelector(s); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const properName=s=>String(s??'').replace(/\s+/g,' ').trim().toLowerCase().replace(/(^|[\s'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
     const cleanPhone=s=>{let d=String(s??'').replace(/\D/g,'');if(d.startsWith('63')&&d.length>=12)d='0'+d.slice(2);else if(d.startsWith('9')&&d.length===10)d='0'+d;return d;};
